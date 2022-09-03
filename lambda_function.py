@@ -60,7 +60,7 @@ def process_attachment(event):
     regex = "\\<(.*?)\\>"
     from_address = re.findall(regex, from_address)[0]
     from_domain = from_address.split('@')[1]
-    if from_domain == "innovisionlabs.co.uk":
+    if from_domain == str(os.environ.get('EmailDomain')):
 
         # Write the attachment to a temp location
         open('/tmp/attach.pdf', 'wb').write(attachment.get_payload(decode=True))
