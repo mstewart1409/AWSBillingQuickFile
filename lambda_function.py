@@ -69,7 +69,7 @@ def process_attachment(event):
         # Destination S3 bucket is hard coded to 'legacy-applications-email-attachment'. This can be configured as a parameter
         # Extracted attachment is temporarily saved as attach.csv and then uploaded to attach-upload-<timestamp>.csv
         try:
-            key = 'invoices/' + filename + '.pdf'
+            key = 'invoices/' + filename
             s3.upload_file('/tmp/attach.pdf', 'awsreceipts2', key)
             print("Upload Successful")
         except FileNotFoundError:
