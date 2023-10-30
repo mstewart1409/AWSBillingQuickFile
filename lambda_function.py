@@ -9,6 +9,7 @@ subprocess.call('pip install -r requirements.txt -t /tmp/ --no-cache-dir'.split(
                 stderr=subprocess.DEVNULL)
 sys.path.insert(1, '/tmp/')
 
+import math
 import boto3
 import json
 import requests
@@ -222,22 +223,17 @@ def parse_textract(response):
     charge = None
     receipt_date = None
     for expense_doc in response["ExpenseDocuments"]:
-        for line_item_group in expense_doc["LineItemGroups"]:
-            for line_items in line_item_group["LineItems"]:
-                for expense_fields in line_items["LineItemExpenseFields"]:
-                    if "ValueDetection" in expense_fields:
-                        if "Net Charges (After Credits/Discounts, excl. Tax)" in expense_fields["ValueDetection"]['Text'] \
-                                and "GBP" in expense_fields["ValueDetection"]['Text']:
-                            charge = expense_fields["ValueDetection"]['Text'].split(
-                                "Net Charges (After Credits/Discounts, excl. Tax)")[1].split('USD')[0].split('GBP')[1].strip()
-
         for summary_field in expense_doc["SummaryFields"]:
             if "LabelDetection" in summary_field and "ValueDetection" in summary_field:
                 if summary_field["LabelDetection"]['Text'] == 'VAT Invoice Number:':
                     invoice_id = summary_field["ValueDetection"]['Text']
                 elif summary_field["LabelDetection"]['Text'] == 'VAT Invoice Date:':
                     receipt_date = datetime.strptime(summary_field["ValueDetection"]['Text'], "%B %d, %Y")
-    return invoice_id, charge, receipt_date
+                elif summary_field["LabelDetection"]['Text'] == 'TOTAL AMOUNT':
+                    charge = float(summary_field["ValueDetection"]['Text'].split('GBP')[1].strip())
+                    charge /= 1.2
+                    charge = math.ceil(charge * 100) / 100
+    return invoice_id, str(charge), receipt_date
 
 
 def lambda_handler(event, context):
